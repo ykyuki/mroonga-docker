@@ -25,4 +25,8 @@ script:
 after_script:
   - docker images
 
+after_success:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push "$image"
+
 # vim:set et ts=2 sw=2:
