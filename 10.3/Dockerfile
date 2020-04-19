@@ -55,49 +55,35 @@ RUN set -ex; \
 	rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEYS \
-# pub   rsa4096 2016-03-30 [SC]
-#         177F 4010 FE56 CA33 3630  0305 F165 6F24 C74C D1D8
-# uid           [ unknown] MariaDB Signing Key <signing-key@mariadb.org>
-# sub   rsa4096 2016-03-30 [E]
-	177F4010FE56CA3336300305F1656F24C74CD1D8
+	8678AF29D1B5ABA1A5A651063359E7CECB64A157
+# pub   rsa4096 2014-03-26 [SC]
+#       8678 AF29 D1B5 ABA1 A5A6  5106 3359 E7CE CB64 A157
+# uid           [ unknown] Launchpad PPA for Groonga
 RUN set -ex; \
 	export GNUPGHOME="$(mktemp -d)"; \
 	for key in $GPG_KEYS; do \
-		gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+		gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
 	done; \
 	gpg --batch --export $GPG_KEYS > /etc/apt/trusted.gpg.d/mariadb.gpg; \
 	command -v gpgconf > /dev/null && gpgconf --kill all || :; \
 	rm -r "$GNUPGHOME"; \
 	apt-key list
 
-# bashbrew-architectures: amd64 arm64v8 ppc64le
-ENV MARIADB_MAJOR 10.3
-ENV MARIADB_VERSION 1:10.3.22+maria~bionic
-# release-status:Stable
-# (https://downloads.mariadb.org/mariadb/+releases/)
-
 RUN set -e;\
-	echo "deb http://ftp.osuosl.org/pub/mariadb/repo/$MARIADB_MAJOR/ubuntu bionic main" > /etc/apt/sources.list.d/mariadb.list; \
-	{ \
-		echo 'Package: *'; \
-		echo 'Pin: release o=MariaDB'; \
-		echo 'Pin-Priority: 999'; \
-	} > /etc/apt/preferences.d/mariadb
-# add repository pinning to make sure dependencies from this MariaDB repo are preferred over Debian dependencies
-#  libmariadbclient18 : Depends: libmysqlclient18 (= 5.5.42+maria-1~wheezy) but 5.5.43-0+deb7u1 is to be installed
+	echo "deb http://ppa.launchpad.net/groonga/ppa/ubuntu bionic main" > /etc/apt/sources.list.d/mariadb.list;
 
 # the "/var/lib/mysql" stuff here is because the mysql-server postinst doesn't have an explicit way to disable the mysql_install_db codepath besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
 # also, we set debconf keys to make APT a little quieter
 RUN set -ex; \
 	{ \
-		echo "mariadb-server-$MARIADB_MAJOR" mysql-server/root_password password 'unused'; \
-		echo "mariadb-server-$MARIADB_MAJOR" mysql-server/root_password_again password 'unused'; \
+		echo "mariadb-server-mroonga" mysql-server/root_password password 'unused'; \
+		echo "mariadb-server-mroonga" mysql-server/root_password_again password 'unused'; \
 	} | debconf-set-selections; \
 	apt-get update; \
 	apt-get install -y \
-		"mariadb-server=$MARIADB_VERSION" \
+		"mariadb-server-mroonga" \
+		"groonga-tokenizer-mecab" \
 # mariadb-backup is installed at the same time so that `mysql-common` is only installed once from just mariadb repos
-		mariadb-backup \
 		socat \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
