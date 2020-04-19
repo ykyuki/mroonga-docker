@@ -236,6 +236,9 @@ docker_setup_db() {
 		DROP DATABASE IF EXISTS test ;
 	EOSQL
 
+	# install mroonga plugin
+	docker_process_sql --database=mysql <<<"INSTALL PLUGIN Mroonga SONAME 'ha_mroonga.so';"
+
 	# Creates a custom database and user if specified
 	if [ -n "$MYSQL_DATABASE" ]; then
 		mysql_note "Creating database ${MYSQL_DATABASE}"
