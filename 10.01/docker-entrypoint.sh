@@ -327,7 +327,7 @@ _main() {
 			echo
 		fi
 	fi
-	exec "$@ --plugin-load=Mroonga=ha_mroonga.so"
+	exec "$@"
 }
 
 # If we are sourced from elsewhere, don't perform any further actions
